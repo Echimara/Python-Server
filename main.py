@@ -1,7 +1,7 @@
 # Name: Chimara Okeke
-# Date: 10/29/2023
+# Date: 12/2/2023
 # Class: CSCE3550.001
-# Project 2: Extending the JWKS server
+# Project 3
 
 # required libraries
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -26,13 +26,11 @@ import uuid
 import socket
 import argon2  # Make sure to install argon2-cffi package
 
-# Limiter
 import time
+import threading
 from threading import Lock
-from ratelimiter import RateLimiter
 
-# Create a global rate limiter object
-rate_limiter = RateLimiter(capacity=10, refill_rate=10)
+
 
 # Generate a random key for AES encryption
 def generate_key():
@@ -190,31 +188,6 @@ def int_to_base64(value):
     return encoded.decode("utf-8")
 
 
-class RateLimiter:
-    def __init__(self, capacity, refill_rate):
-        self.capacity = capacity
-        self.tokens = capacity
-        self.refill_rate = refill_rate
-        self.last_refill_time = time.time()
-        self.lock = Lock()
-
-    def _refill(self):
-        now = time.time()
-        time_since_last_refill = now - self.last_refill_time
-        tokens_to_add = time_since_last_refill * self.refill_rate
-        self.tokens = min(self.capacity, self.tokens + tokens_to_add)
-        self.last_refill_time = now
-
-    def acquire(self):
-        with self.lock:
-            self._refill()
-            if self.tokens >= 1:
-                self.tokens -= 1
-                return True
-            else:
-                return False
-
-
 class MyServer(BaseHTTPRequestHandler):
     def do_PUT(self):
         self.send_response(405)
@@ -259,12 +232,7 @@ class MyServer(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
         if parsed_path.path == "/auth":
-            # Rate limit the request
-            if not rate_limiter.acquire():
-                self.send_response(429)  # Too Many Requests
-                self.end_headers()
-                return
-
+            
             headers = {"kid": "goodKID"}
             token_payload = {
                 "user": "username",
