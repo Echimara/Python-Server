@@ -1,4 +1,4 @@
-## Bulking up our JWKS server
+## Bulking up a JWKS server
 The server ```main.py``` uses a pre-written table schema to query a database ```totally_not_my_privateKeys.db```.
 The table schema(s):
 <br>1.
